@@ -1,0 +1,140 @@
+# Removido version conforme recomendação do Docker Compose
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: godlevel-db
+    environment:
+      POSTGRES_DB: challenge_db
+      POSTGRES_USER: challenge
+      POSTGRES_PASSWORD: challenge_2024
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U challenge -d challenge_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - analytics-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: godlevel-redis
+    ports:
+      - "6390:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - analytics-network
+
+  data-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: godlevel-data-gen
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 5 &&
+        echo 'Generating challenge data...' &&
+        python generate_data.py --db-url postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+      "
+    networks:
+      - analytics-network
+    profiles:
+      - tools
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: godlevel-backend
+    environment:
+      DATABASE_URL: postgresql://challenge:challenge_2024@postgres:5432/challenge_db
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGINS: http://localhost:3001,http://localhost:5173
+      ENVIRONMENT: development
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+    networks:
+      - analytics-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8001
+    container_name: godlevel-frontend
+    environment:
+      VITE_API_URL: http://localhost:8001
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    networks:
+      - analytics-network
+
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: godlevel-nginx
+  #   ports:
+  #     - "8080:80"
+  #   volumes:
+  #     - ./nginx.conf.temp:/etc/nginx/nginx.conf:ro
+  #     - ./frontend/dist:/usr/share/nginx/html:ro
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - analytics-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: godlevel-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@godlevel.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - analytics-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  analytics-network:
+    driver: bridge

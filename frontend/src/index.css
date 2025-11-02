@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Prevent text selection on buttons and clickable elements to avoid extension interference */
+button:not(.react-resizable-handle),
+a[role="button"]:not(.react-resizable-handle),
+[role="button"]:not(.react-resizable-handle) {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent extension interference with click events */
+button:active:not(.react-resizable-handle),
+a[role="button"]:active:not(.react-resizable-handle),
+[role="button"]:active:not(.react-resizable-handle) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  html, body {
+    @apply bg-background text-foreground;
+    max-width: 100%;
+    width: 100%;
+  }
+  #root {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  /* Exclude react-grid-layout elements from global border styling */
+  .react-grid-item,
+  .react-grid-item *,
+  .react-resizable-handle,
+  .react-draggable {
+    border: none !important;
+  }
+}
+
+/* React Grid Layout Styles for Dashboard Builder */
+/* Minimal custom styles - most styling comes from react-grid-layout default CSS */
+.react-grid-item.react-grid-placeholder {
+  background: rgb(59, 130, 246);
+  opacity: 0.2;
+  border-radius: 8px;
+}
+

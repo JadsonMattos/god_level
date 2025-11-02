@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: godlevel-backend
+    runtime: python
+    env: python
+    plan: free  # Mude para 'standard' em produção
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false  # Render vai pedir para conectar ao PostgreSQL
+      - key: REDIS_URL
+        sync: false  # Cole a URL do Upstash Redis
+      - key: SECRET_KEY
+        generateValue: true  # Gera automaticamente
+      - key: ENVIRONMENT
+        value: production
+      - key: CORS_ORIGINS
+        value: "https://godlevel-frontend.onrender.com"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+    healthCheckPath: /api/v1/health
+
+databases:
+  - name: godlevel-postgres
+    databaseName: godlevel_db
+    user: godlevel_user
+    plan: free  # Mude para 'standard' em produção
+
