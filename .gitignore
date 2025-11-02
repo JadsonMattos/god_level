@@ -84,6 +84,9 @@ Thumbs.db
 # Database
 *.sqlite
 *.db
+backups/
+*.sql
+*.sql.gz
 
 # Logs
 logs/

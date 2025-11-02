@@ -322,10 +322,23 @@ def generate_customers(conn, num_customers=10000):
 
 
 def generate_sales(conn, stores, channels, products, items, option_groups, customers, months=6):
-    """Generate sales with realistic patterns"""
+    """Generate sales with realistic patterns (OTIMIZADO)"""
     print(f"Generating sales for {months} months...")
+    print("⚡ MODO OTIMIZADO: batch_size=5000, commits reduzidos")
     
     cursor = conn.cursor()
+    
+    # OTIMIZAÇÃO 1: Tentar desabilitar índices temporariamente (pode falhar em DBs gerenciados)
+    # Não crítico - outras otimizações ainda funcionam
+    try:
+        cursor.execute("SET session_replication_role = 'replica';")
+        conn.commit()
+        print("  ⚡ Índices desabilitados temporariamente (acelera inserção)")
+    except Exception as e:
+        # Rollback se falhar e continuar (é opcional)
+        conn.rollback()
+        print(f"  ℹ️  Índices ativos (normal em DBs gerenciados - outras otimizações ativas)")
+    
     start_date = datetime.now() - timedelta(days=30 * months)
     end_date = datetime.now()
     
@@ -335,7 +348,9 @@ def generate_sales(conn, stores, channels, products, items, option_groups, custo
     
     current_date = start_date
     total_sales = 0
-    batch_size = 500
+    batch_size = 5000  # OTIMIZAÇÃO 2: Aumentado de 500 para 5000 (10x)
+    commit_counter = 0
+    commit_interval = 3  # OTIMIZAÇÃO 3: Commit a cada 3 batches
     
     while current_date <= end_date:
         weekday = current_date.weekday()
@@ -381,18 +396,32 @@ def generate_sales(conn, stores, channels, products, items, option_groups, custo
                 insert_sales_batch(cursor, sales_batch, items, option_groups)
                 total_sales += len(sales_batch)
                 sales_batch = []
-                conn.commit()
+                commit_counter += 1
+                
+                # OTIMIZAÇÃO 3: Commit menos frequente
+                if commit_counter >= commit_interval:
+                    conn.commit()
+                    commit_counter = 0
         
         # Insert remaining
         if sales_batch:
             insert_sales_batch(cursor, sales_batch, items, option_groups)
             total_sales += len(sales_batch)
             conn.commit()
-        
+    
         current_date += timedelta(days=1)
         
         if current_date.day == 1:
             print(f"  → {current_date.strftime('%B %Y')}: {total_sales:,} sales")
+    
+    # OTIMIZAÇÃO 1: Tentar reabilitar índices (apenas se foram desabilitados)
+    try:
+        cursor.execute("SET session_replication_role = 'origin';")
+        conn.commit()
+        print("  ⚡ Índices reabilitados")
+    except Exception as e:
+        # Se não foram desabilitados, não precisa reabilitar
+        conn.rollback()
     
     print(f"✓ {total_sales:,} total sales generated")
     return total_sales
@@ -563,6 +592,7 @@ def insert_sales_batch(cursor, sales_batch, items, option_groups):
         s['discount_reason'], s['people_qty'], 'POS'
     ) for s in sales_batch]
     
+    # OTIMIZAÇÃO 4: Aumentar page_size de 500 para 2000
     execute_batch(cursor, """
         INSERT INTO sales (
             store_id, customer_id, channel_id, customer_name,
@@ -572,7 +602,7 @@ def insert_sales_batch(cursor, sales_batch, items, option_groups):
             production_seconds, delivery_seconds,
             discount_reason, people_quantity, origin
         ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """, sales_data, page_size=500)
+    """, sales_data, page_size=2000)
     
     # Get inserted sale IDs
     cursor.execute("""
