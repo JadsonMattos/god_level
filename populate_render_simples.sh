@@ -216,14 +216,14 @@ else
     echo ""
     # Restaurar com verbose e mostrar progresso básico
     echo "📡 Conectando ao Render Postgres com SSL..."
-docker run --rm -i postgres:15 \
-    env PGPASSWORD="foSp04SLYFijEzgfL43RL595BxyREJvV" \
-    psql \
-    "host=dpg-d43oac9r0fns73fb7i40-a.oregon-postgres.render.com \
-     port=5432 \
-     dbname=challenge_db_kvmd \
-     user=challenge \
-     sslmode=require" < "$CLEANED_SQL" | \
+PGPASSWORD="foSp04SLYFijEzgfL43RL595BxyREJvV" psql \
+    -h dpg-d43oac9r0fns73fb7i40-a.oregon-postgres.render.com \
+    -p 5432 \
+    -U challenge \
+    -d challenge_db_kvmd \
+    --set=sslmode=require \
+    -v ON_ERROR_STOP=1 \
+    < "$CLEANED_SQL" | \
         while IFS= read -r line; do
             # Mostrar comandos importantes (CREATE, ALTER, INSERT, COPY)
             if [[ "$line" =~ ^(CREATE|ALTER|INSERT|COPY|SET|COMMIT) ]]; then
