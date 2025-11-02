@@ -12,7 +12,7 @@ alembic==1.12.1
 
 # Cache
 redis==5.0.1
-hiredis==2.2.3
+# hiredis==2.2.3  # Removido: requer Rust compilation que falha no Render
 
 # Background Jobs
 celery==5.3.4
