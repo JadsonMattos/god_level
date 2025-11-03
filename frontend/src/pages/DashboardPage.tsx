@@ -210,7 +210,7 @@ export function DashboardPage() {
 
     // Anomaly Alerts
     if (widget.dataSource === 'alerts') {
-      return <AnomalyAlerts data={alertsData || []} title={widgetTitle} />
+      return <AnomalyAlerts alerts={alertsData || []} title={widgetTitle} />
     }
 
     // Top Items Chart
@@ -220,17 +220,45 @@ export function DashboardPage() {
 
     // Products Customizations Chart
     if (widget.dataSource === 'customizations') {
-      return <ProductsCustomizationsChart data={customizationsData || []} title={widgetTitle} />
+      // Transform data to match component interface
+      const transformedData = (customizationsData || []).map(item => ({
+        product_name: item.product_name,
+        total_customizations: item.total_customizations,
+        // Calculate sales with customizations based on customization rate
+        sales_with_customizations: Math.round(item.total_sales * (item.customization_rate / 100)),
+        total_sales: item.total_sales,
+        customization_rate: item.customization_rate
+      }))
+      return <ProductsCustomizationsChart data={transformedData} title={widgetTitle} />
     }
 
     // Payment Mix Chart
     if (widget.dataSource === 'payments') {
-      return <PaymentMixChart data={paymentsData || null} title={widgetTitle} />
+      // Transform data to match component interface
+      const transformedData = (paymentsData || []).map(item => ({
+        channel_name: item.channel_name,
+        payment_type: item.payment_type_name,
+        payment_count: item.payment_count,
+        total_value: item.total_value,
+        percentage: item.percentage
+      }))
+      return <PaymentMixChart data={transformedData} title={widgetTitle} />
     }
 
     // Delivery Regions Chart
     if (widget.dataSource === 'delivery_regions') {
-      return <DeliveryRegionsChart data={deliveryRegionsData || []} title={widgetTitle} />
+      // Transform data to match component interface
+      const transformedData = (deliveryRegionsData || []).map(item => ({
+        neighborhood: item.neighborhood,
+        city: item.city,
+        state: item.city, // Use city as state fallback if not available
+        delivery_count: item.delivery_count,
+        avg_delivery_time: item.avg_delivery_time,
+        min_delivery_time: Math.max(0, item.avg_delivery_time - 10), // Approximate min
+        max_delivery_time: item.avg_delivery_time + 10, // Approximate max
+        total_revenue: item.total_revenue
+      }))
+      return <DeliveryRegionsChart data={transformedData} title={widgetTitle} />
     }
 
     // Fallback for unknown widget types
