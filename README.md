@@ -255,9 +255,6 @@ npm run test:e2e
 ## 📖 Documentação
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Decisões arquiteturais detalhadas
-- [PROJECT_RULES.md](./PROJECT_RULES.md) - Regras e convenções de código
-- [ROADMAP.md](./ROADMAP.md) - Cronograma de implementação
-- [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md) - Guia passo-a-passo
 - [API Docs](http://localhost:8000/docs) - Documentação da API (Swagger)
 
 ### Documentação Original do Desafio
@@ -267,77 +264,6 @@ npm run test:e2e
 - [AVALIACAO.md](./AVALIACAO.md) - Como a solução será avaliada
 - [FAQ.md](./FAQ.md) - Perguntas frequentes
 - [QUICKSTART.md](./QUICKSTART.md) - Setup inicial
-
----
-
-## 🎯 Roadmap
-
-### Sprint 1: Fundação ✅ (100%)
-- [x] Setup Docker Compose
-- [x] Estrutura de pastas
-- [x] Documentação inicial
-- [x] Modelar PostgreSQL com SQLAlchemy
-- [x] Criar FastAPI app básico
-- [x] Criar React app básico
-- [x] Listar vendas (backend + frontend)
-
-### Sprint 2: Analytics Core ✅ (100%)
-- [x] Query Builder service
-- [x] Endpoints de analytics
-- [x] Componentes de filtro
-- [x] Primeiro gráfico (linha)
-
-### Sprint 3: Visualizações ✅ (90%)
-- [x] Múltiplos gráficos
-- [x] Export CSV
-- [x] Página de comparação
-- [x] Filtros avançados
-- [ ] Cache layer (opcional)
-
-### Sprint 4: Dashboards (0%)
-- [ ] Dashboard builder
-- [ ] Save/load dashboards
-- [ ] Compartilhamento
-
-### Sprint 5: Otimização (0%)
-- [ ] Cache layer
-- [ ] Testes
-- [ ] Demo vídeo
-- [ ] Documentação final
-
-**Progresso**: 70% completo
-
----
-
-## 🔧 Desenvolvimento
-
-### Ambiente Local
-
-```bash
-# Backend
-cd backend
-python -m venv venv
-source venv/bin/activate  # ou `venv\Scripts\activate` no Windows
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-### Linting
-
-```bash
-# Backend
-flake8 backend/
-pylint backend/
-
-# Frontend
-npm run lint
-npm run lint:fix
-```
 
 ---
 
@@ -414,18 +340,6 @@ Para testar analytics:
 
 ---
 
-## 🤝 Contribuindo
-
-Este é um projeto de challenge. Para contribuir:
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -m 'feat: adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Abra um Pull Request
-
----
-
 ## 📄 Licença
 
 Este projeto é parte do **God Level Coder Challenge**.
@@ -445,9 +359,3 @@ Este projeto é parte do **God Level Coder Challenge**.
 - Arcca por fornecer os dados
 - Stack escolhida por sua robustez
 - Comunidade open source
-
----
-
-**Status**: 🚧 Em desenvolvimento  
-**Próxima revisão**: Sprint 2
-
