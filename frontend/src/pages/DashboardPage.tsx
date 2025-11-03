@@ -51,12 +51,38 @@ export function DashboardPage() {
   const loading = summaryLoading || revenueLoading || productsLoading || channelsLoading || loadingDashboard
 
   const handleExport = () => {
-    const allData = [
-      { period: summary?.last_sale, revenue: summary?.total_revenue, sales: summary?.sales_count },
-      ...revenueData.map(r => ({ period: r.period, revenue: r.revenue, sales: r.sales_count }))
-    ]
+    // Check if revenueData is available
+    if (!revenueData || revenueData.length === 0) {
+      alert('Nenhum dado disponível para exportar. Aguarde o carregamento dos dados.')
+      return
+    }
     
-    exportToCSV(allData, `analytics-dashboard-${new Date().toISOString().split('T')[0]}`, [
+    // Build data from revenue data (which has proper period structure)
+    // Use header names as keys so they match the headers array
+    const allData = revenueData.map(r => ({
+      'Período': r.period || '',
+      'Faturamento': typeof r.revenue === 'number' ? r.revenue : 0,
+      'Número de Vendas': typeof r.sales_count === 'number' ? r.sales_count : 0
+    }))
+    
+    // Filter out any invalid entries (missing period or invalid values)
+    const validData = allData.filter(item => 
+      item['Período'] && 
+      item['Período'].trim() !== '' &&
+      item['Faturamento'] != null && 
+      !isNaN(item['Faturamento']) &&
+      item['Número de Vendas'] != null &&
+      !isNaN(item['Número de Vendas'])
+    )
+    
+    // Only export if we have valid data
+    if (validData.length === 0) {
+      alert('Nenhum dado válido disponível para exportar. Verifique se há dados no período selecionado.')
+      return
+    }
+    
+    // Export CSV with matching headers
+    exportToCSV(validData, `analytics-dashboard-${new Date().toISOString().split('T')[0]}`, [
       'Período',
       'Faturamento',
       'Número de Vendas'

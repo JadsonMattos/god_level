@@ -24,11 +24,17 @@ export function exportToCSV<T extends Record<string, any>>(
     ...data.map(row => 
       csvHeaders.map(header => {
         const value = row[header]
-        // Escape commas and quotes in values
-        if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
-          return `"${value.replaceAll('"', '""')}"`
+        // Handle null/undefined
+        if (value === null || value === undefined) {
+          return ''
         }
-        return value
+        // Convert to string for CSV
+        const stringValue = String(value)
+        // Escape commas and quotes in values
+        if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+          return `"${stringValue.replaceAll('"', '""')}"`
+        }
+        return stringValue
       }).join(',')
     )
   ]

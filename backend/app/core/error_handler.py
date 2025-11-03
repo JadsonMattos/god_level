@@ -59,8 +59,9 @@ def register_error_handlers(app):
             },
         )
 
+        # Return 422 for validation errors (matches Pydantic v2 behavior)
         return JSONResponse(
-            status_code=400,
+            status_code=422,
             content={
                 "error": "Dados inválidos",
                 "message": exc.message,
