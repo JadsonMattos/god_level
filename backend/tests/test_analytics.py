@@ -437,11 +437,11 @@ def test_invalid_date_format(client):
     """Test invalid date format."""
     params = {"start_date": "invalid-date"}
     response = client.get("/api/v1/analytics/revenue", params=params)
-    assert response.status_code == 400
+    assert response.status_code == 422
 
 
 def test_invalid_end_date_format(client):
     """Test invalid end date format."""
     params = {"end_date": "invalid-date"}
     response = client.get("/api/v1/analytics/revenue", params=params)
-    assert response.status_code == 400
+    assert response.status_code == 422

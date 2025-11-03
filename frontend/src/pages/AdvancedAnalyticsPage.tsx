@@ -6,13 +6,19 @@ import { AdvancedFilters } from '../components/filters/AdvancedFilters'
 import type { AnalyticsFilters } from '../types/api'
 
 export function AdvancedAnalyticsPage() {
-  const [filters, setFilters] = useState<AnalyticsFilters>({
+  // Filtros ativos (aplicados aos gráficos)
+  const defaultFilters: AnalyticsFilters = {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
-  })
+  }
   
-  const { data: promotionsData, loading: promotionsLoading, error: promotionsError } = usePromotionsAnalysis(filters)
-  const { data: inventoryData, loading: inventoryLoading, error: inventoryError } = useInventoryTurnover(filters, 20)
+  const [activeFilters, setActiveFilters] = useState<AnalyticsFilters>(defaultFilters)
+  
+  // Filtros locais (em edição, não aplicados ainda)
+  const [localFilters, setLocalFilters] = useState<AnalyticsFilters>(defaultFilters)
+  
+  const { data: promotionsData, loading: promotionsLoading, error: promotionsError } = usePromotionsAnalysis(activeFilters)
+  const { data: inventoryData, loading: inventoryLoading, error: inventoryError } = useInventoryTurnover(activeFilters, 20)
 
   const loading = promotionsLoading || inventoryLoading
 
@@ -48,13 +54,14 @@ export function AdvancedAnalyticsPage() {
         
         {/* Advanced Filters */}
         <AdvancedFilters
-          filters={filters}
-          onChange={setFilters}
-          onApply={() => {}}
-          onClear={() => setFilters({
-            start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            end_date: new Date().toISOString().split('T')[0],
-          })}
+          filters={localFilters}
+          onChange={setLocalFilters}
+          onApply={() => setActiveFilters(localFilters)}
+          onClear={() => {
+            const clearedFilters = defaultFilters
+            setLocalFilters(clearedFilters)
+            setActiveFilters(clearedFilters)
+          }}
         />
       </div>
 

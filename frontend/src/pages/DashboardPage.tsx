@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useSummary, useRevenue, useTopProducts, useChannelPerformance } from '../hooks/useAnalytics'
+import { useProductsMargin, useDeliveryPerformance, useCustomerInsights, usePeakHoursHeatmap } from '../hooks/useAnalyticsExtended'
+import { useTopItems, useProductsCustomizations, usePaymentMix, useDeliveryRegions } from '../hooks/useAdvancedAnalytics'
+import { useAnomalyAlerts } from '../hooks/useAnomalyAlerts'
 import { exportToCSV } from '../utils/export'
 import { RevenueChart } from '../components/charts/RevenueChart'
 import { TopProductsChart } from '../components/charts/TopProductsChart'
 import { ChannelPerformanceChart } from '../components/charts/ChannelPerformanceChart'
 import { PieChart } from '../components/charts/PieChart'
 import { StatsCard } from '../components/charts/StatsCard'
+import { ProductsMarginChart } from '../components/charts/ProductsMarginChart'
+import { DeliveryPerformanceChart } from '../components/charts/DeliveryPerformanceChart'
+import { CustomerInsightsCard } from '../components/charts/CustomerInsightsCard'
+import { PeakHoursHeatmap } from '../components/charts/PeakHoursHeatmap'
+import { AnomalyAlerts } from '../components/charts/AnomalyAlerts'
+import { TopItemsChart } from '../components/charts/TopItemsChart'
+import { ProductsCustomizationsChart } from '../components/charts/ProductsCustomizationsChart'
+import { PaymentMixChart } from '../components/charts/PaymentMixChart'
+import { DeliveryRegionsChart } from '../components/charts/DeliveryRegionsChart'
 import { AdvancedFilters } from '../components/filters/AdvancedFilters'
 import { dashboardApi } from '../services/dashboardApi'
 import type { AnalyticsFilters } from '../types/api'
@@ -29,6 +41,15 @@ export function DashboardPage() {
   const { data: revenueData, loading: revenueLoading, error: revenueError } = useRevenue(activeFilters)
   const { data: topProducts, loading: productsLoading } = useTopProducts(activeFilters, 10)
   const { data: channels, loading: channelsLoading } = useChannelPerformance(activeFilters)
+  const { data: marginData } = useProductsMargin(activeFilters, 10)
+  const { data: deliveryData } = useDeliveryPerformance(activeFilters, 'day')
+  const { data: customerData } = useCustomerInsights(activeFilters)
+  const { data: heatmapData } = usePeakHoursHeatmap(activeFilters)
+  const { data: alertsData } = useAnomalyAlerts(activeFilters)
+  const { data: itemsData } = useTopItems(activeFilters, 20)
+  const { data: customizationsData } = useProductsCustomizations(activeFilters, 20)
+  const { data: paymentsData } = usePaymentMix(activeFilters)
+  const { data: deliveryRegionsData } = useDeliveryRegions(activeFilters, 50)
 
   // Load default dashboard on mount
   useEffect(() => {
@@ -143,14 +164,16 @@ export function DashboardPage() {
     )
   }
 
-  // Helper function to render custom widgets (simplified version)
+  // Helper function to render custom widgets
   const renderCustomWidget = (widget: Widget) => {
     const widgetTitle = widget.title || 'Widget'
     
+    // Revenue Chart
     if (widget.dataSource === 'revenue') {
-      return <RevenueChart data={revenueData} title={widgetTitle} />
+      return <RevenueChart data={revenueData || []} title={widgetTitle} />
     }
     
+    // Summary Stats Cards
     if (widget.dataSource === 'summary') {
       const metric = widget.config?.metric
       if (metric === 'total_revenue' && summary) {
@@ -165,7 +188,52 @@ export function DashboardPage() {
       return <StatsCard title={widgetTitle} value={0} color="blue" />
     }
 
-    // For other widget types, show a placeholder
+    // Products Margin Chart
+    if (widget.dataSource === 'margin') {
+      return <ProductsMarginChart data={marginData || []} title={widgetTitle} />
+    }
+
+    // Delivery Performance Chart
+    if (widget.dataSource === 'delivery') {
+      return <DeliveryPerformanceChart data={deliveryData || []} title={widgetTitle} />
+    }
+
+    // Customer Insights Card
+    if (widget.dataSource === 'customers') {
+      return <CustomerInsightsCard data={customerData || null} title={widgetTitle} />
+    }
+
+    // Peak Hours Heatmap
+    if (widget.dataSource === 'heatmap') {
+      return <PeakHoursHeatmap data={heatmapData || null} title={widgetTitle} />
+    }
+
+    // Anomaly Alerts
+    if (widget.dataSource === 'alerts') {
+      return <AnomalyAlerts data={alertsData || []} title={widgetTitle} />
+    }
+
+    // Top Items Chart
+    if (widget.dataSource === 'items') {
+      return <TopItemsChart data={itemsData || []} title={widgetTitle} />
+    }
+
+    // Products Customizations Chart
+    if (widget.dataSource === 'customizations') {
+      return <ProductsCustomizationsChart data={customizationsData || []} title={widgetTitle} />
+    }
+
+    // Payment Mix Chart
+    if (widget.dataSource === 'payments') {
+      return <PaymentMixChart data={paymentsData || null} title={widgetTitle} />
+    }
+
+    // Delivery Regions Chart
+    if (widget.dataSource === 'delivery_regions') {
+      return <DeliveryRegionsChart data={deliveryRegionsData || []} title={widgetTitle} />
+    }
+
+    // Fallback for unknown widget types
     return (
       <div className="p-4 bg-gray-50 rounded">
         <h4 className="font-semibold mb-2">{widgetTitle}</h4>
@@ -173,7 +241,7 @@ export function DashboardPage() {
           Widget tipo: {widget.type} | DataSource: {widget.dataSource || 'N/A'}
         </p>
         <p className="text-xs text-gray-400 mt-2">
-          Para widgets avançados, edite no Builder com todos os componentes necessários
+          Tipo de widget não suportado ainda
         </p>
       </div>
     )
