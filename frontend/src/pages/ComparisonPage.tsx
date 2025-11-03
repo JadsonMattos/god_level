@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRevenue } from '../hooks/useAnalytics'
 import { RevenueChart } from '../components/charts/RevenueChart'
 import { StatsCard } from '../components/charts/StatsCard'
-import type { AnalyticsFilters } from '../types/api'
+import { storesApi } from '../services/api'
+import type { AnalyticsFilters, Store, Channel } from '../types/api'
 
 interface ComparisonState {
   period1: AnalyticsFilters
@@ -30,6 +31,28 @@ export function ComparisonPage() {
 
   // Estados locais (em edição, não aplicados ainda)
   const [localComparison, setLocalComparison] = useState<ComparisonState>(activeComparison)
+  const [stores, setStores] = useState<Store[]>([])
+  const [channels, setChannels] = useState<Channel[]>([])
+  const [filtersLoading, setFiltersLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setFiltersLoading(true)
+        const [storesData, channelsData] = await Promise.all([
+          storesApi.getStores(),
+          storesApi.getChannels()
+        ])
+        setStores(storesData.data)
+        setChannels(channelsData.data)
+      } catch (error) {
+        console.error('Failed to load stores or channels:', error)
+      } finally {
+        setFiltersLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
   const { data: revenue1, loading: loading1 } = useRevenue(activeComparison.period1)
   const { data: revenue2, loading: loading2 } = useRevenue(activeComparison.period2)
@@ -86,6 +109,46 @@ export function ComparisonPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div>
+              <label htmlFor="period1-store" className="block text-sm font-medium text-gray-700 mb-1">Loja</label>
+              <select
+                id="period1-store"
+                value={localComparison.period1.store_id || ''}
+                onChange={(e) => setLocalComparison({
+                  ...localComparison,
+                  period1: { ...localComparison.period1, store_id: e.target.value ? Number.parseInt(e.target.value, 10) : undefined }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                disabled={filtersLoading}
+              >
+                <option value="">Todas as lojas</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name} {store.city && store.state ? `(${store.city}, ${store.state})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="period1-channel" className="block text-sm font-medium text-gray-700 mb-1">Canal</label>
+              <select
+                id="period1-channel"
+                value={localComparison.period1.channel_id || ''}
+                onChange={(e) => setLocalComparison({
+                  ...localComparison,
+                  period1: { ...localComparison.period1, channel_id: e.target.value ? Number.parseInt(e.target.value, 10) : undefined }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                disabled={filtersLoading}
+              >
+                <option value="">Todos os canais</option>
+                {channels.map((channel) => (
+                  <option key={channel.id} value={channel.id}>
+                    {channel.name} {channel.description ? `- ${channel.description}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -118,6 +181,46 @@ export function ComparisonPage() {
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label htmlFor="period2-store" className="block text-sm font-medium text-gray-700 mb-1">Loja</label>
+              <select
+                id="period2-store"
+                value={localComparison.period2.store_id || ''}
+                onChange={(e) => setLocalComparison({
+                  ...localComparison,
+                  period2: { ...localComparison.period2, store_id: e.target.value ? Number.parseInt(e.target.value, 10) : undefined }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                disabled={filtersLoading}
+              >
+                <option value="">Todas as lojas</option>
+                {stores.map((store) => (
+                  <option key={store.id} value={store.id}>
+                    {store.name} {store.city && store.state ? `(${store.city}, ${store.state})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="period2-channel" className="block text-sm font-medium text-gray-700 mb-1">Canal</label>
+              <select
+                id="period2-channel"
+                value={localComparison.period2.channel_id || ''}
+                onChange={(e) => setLocalComparison({
+                  ...localComparison,
+                  period2: { ...localComparison.period2, channel_id: e.target.value ? Number.parseInt(e.target.value, 10) : undefined }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                disabled={filtersLoading}
+              >
+                <option value="">Todos os canais</option>
+                {channels.map((channel) => (
+                  <option key={channel.id} value={channel.id}>
+                    {channel.name} {channel.description ? `- ${channel.description}` : ''}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
