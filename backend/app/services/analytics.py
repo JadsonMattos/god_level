@@ -1309,6 +1309,17 @@ class AnalyticsService:
         if not start_date:
             start_date = end_date - timedelta(days=180)
 
+        # Detect database type for date truncation
+        try:
+            db_url = str(self.db.bind.url)
+        except AttributeError:
+            db_url = "sqlite:///test.db"
+
+        if "sqlite" in db_url:
+            month_expr = func.strftime("%Y-%m", Sale.created_at)
+        else:
+            month_expr = func.date_trunc("month", Sale.created_at)
+
         # Get monthly revenue for each store
         query = (
             self.db.query(
@@ -1316,7 +1327,7 @@ class AnalyticsService:
                 Store.name.label("store_name"),
                 Store.city.label("city"),
                 Store.state.label("state"),
-                func.date_trunc("month", Sale.created_at).label("month"),
+                month_expr.label("month"),
                 func.sum(Sale.total_amount).label("monthly_revenue"),
                 func.count(Sale.id).label("monthly_sales"),
             )
@@ -1332,9 +1343,9 @@ class AnalyticsService:
                 Store.name,
                 Store.city,
                 Store.state,
-                func.date_trunc("month", Sale.created_at),
+                month_expr,
             )
-            .order_by(Store.id, func.date_trunc("month", Sale.created_at))
+            .order_by(Store.id, month_expr)
         )
 
         results = query.all()
@@ -1500,12 +1511,23 @@ class AnalyticsService:
         if not start_date:
             start_date = end_date - timedelta(days=365)
 
+        # Detect database type for date truncation
+        try:
+            db_url = str(self.db.bind.url)
+        except AttributeError:
+            db_url = "sqlite:///test.db"
+
+        if "sqlite" in db_url:
+            month_expr = func.strftime("%Y-%m", Sale.created_at)
+        else:
+            month_expr = func.date_trunc("month", Sale.created_at)
+
         # Get monthly sales for each product
         query = (
             self.db.query(
                 Product.id.label("product_id"),
                 Product.name.label("product_name"),
-                func.date_trunc("month", Sale.created_at).label("month"),
+                month_expr.label("month"),
                 func.sum(ProductSale.quantity).label("monthly_quantity"),
                 func.sum(ProductSale.total_price).label("monthly_revenue"),
                 func.count(ProductSale.id).label("monthly_sales"),
@@ -1527,8 +1549,8 @@ class AnalyticsService:
             query = query.filter(Sale.channel_id == channel_id)
 
         query = query.group_by(
-            Product.id, Product.name, func.date_trunc("month", Sale.created_at)
-        ).order_by(Product.id, func.date_trunc("month", Sale.created_at))
+            Product.id, Product.name, month_expr
+        ).order_by(Product.id, month_expr)
 
         results = query.all()
 
@@ -1653,6 +1675,8 @@ class AnalyticsService:
         seasonality_analysis.sort(
             key=lambda x: x["seasonality_score"], reverse=True
         )
+
+        return seasonality_analysis
 
     @cache_result(prefix="promotions", ttl=300)
     def get_promotions_analysis(

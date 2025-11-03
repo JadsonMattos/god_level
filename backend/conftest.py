@@ -10,6 +10,27 @@ from fastapi.testclient import TestClient
 from app.db.base import Base
 from app.main import app
 
+# Import all models to ensure tables are created
+from app.models import (
+    Brand,
+    SubBrand,
+    Store,
+    Channel,
+    Category,
+    Product,
+    Item,
+    OptionGroup,
+    Customer,
+    Sale,
+    ProductSale,
+    ItemProductSale,
+    Payment,
+    PaymentType,
+    DeliverySale,
+    DeliveryAddress,
+    Dashboard,
+)
+
 
 @pytest.fixture(scope="session")
 def test_db_url():

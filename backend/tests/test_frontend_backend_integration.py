@@ -22,8 +22,9 @@ class MockAPIClient:
     def get(self, url, params=None):
         self.requests.append({"method": "GET", "url": url, "params": params})
 
-        # Extract endpoint from URL
-        endpoint = url.split("/api/v1")[-1] if "/api/v1" in url else url
+        # Extract endpoint from URL (remove query params for matching)
+        endpoint_base = url.split("?")[0]  # Remove query params
+        endpoint = endpoint_base.split("/api/v1")[-1] if "/api/v1" in endpoint_base else endpoint_base
 
         if endpoint in self.responses:
             response = Mock()
@@ -37,8 +38,10 @@ class MockAPIClient:
             response.status_code = 200
             return response
 
-    def post(self, url, json_data=None):
-        self.requests.append({"method": "POST", "url": url, "json": json_data})
+    def post(self, url, json=None, json_data=None):
+        # Accept both 'json' (FastAPI TestClient style) and 'json_data' (legacy)
+        data = json if json is not None else json_data
+        self.requests.append({"method": "POST", "url": url, "json": data})
 
         endpoint = url.split("/api/v1")[-1] if "/api/v1" in url else url
 
@@ -119,8 +122,8 @@ class TestFrontendBackendIntegration:
                 ]
             },
             "summary": {
-                "total_revenue": 3500,
-                "sales_count": 35,
+                "total_revenue": 2500,  # Updated to match revenue data sum (1000 + 1500)
+                "sales_count": 25,  # Updated to match revenue data sum (10 + 15)
                 "avg_ticket": 100,
                 "first_sale": "2024-01-01",
                 "last_sale": "2024-01-02",
@@ -219,8 +222,8 @@ class TestFrontendBackendIntegration:
 
         assert result["loading"] is False
         assert result["error"] is None
-        assert result["data"]["total_revenue"] == 3500
-        assert result["data"]["sales_count"] == 35
+        assert result["data"]["total_revenue"] == 2500  # Updated to match sample data (1000 + 1500)
+        assert result["data"]["sales_count"] == 25  # Updated to match sample data (10 + 15)
         assert result["data"]["avg_ticket"] == 100
 
     def test_dashboard_crud_integration(self, mock_api_client):
