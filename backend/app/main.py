@@ -68,9 +68,15 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS - Configure properly for production
-cors_origins = (
-    settings.CORS_ORIGINS.split(",") if settings.CORS_ORIGINS else []
-)
+cors_origins = []
+
+# Always include origins from environment variable
+if settings.CORS_ORIGINS:
+    for origin in settings.CORS_ORIGINS.split(","):
+        origin = origin.strip()
+        if origin and origin not in cors_origins:
+            cors_origins.append(origin)
+
 if settings.ENVIRONMENT == "development":
     # Allow common dev origins
     dev_origins = [
@@ -78,7 +84,30 @@ if settings.ENVIRONMENT == "development":
         "http://localhost:3001",
         "http://localhost:5173",
     ]
-    cors_origins.extend(dev_origins)
+    for origin in dev_origins:
+        if origin not in cors_origins:
+            cors_origins.append(origin)
+
+# Always include Render frontend domains (for production/deployment)
+# These should be allowed regardless of environment setting
+render_origins = [
+    "https://godlevel-frontend.onrender.com",
+    "https://godlevel-frontend.render.com",
+]
+for origin in render_origins:
+    if origin not in cors_origins:
+        cors_origins.append(origin)
+
+# Log configured origins (without sensitive info)
+logger.info(
+    f"CORS configured for {len(cors_origins)} origin(s)",
+    extra={
+        "extra_data": {
+            "environment": settings.ENVIRONMENT,
+            "origins_count": len(cors_origins),
+        }
+    },
+)
 
 app.add_middleware(
     CORSMiddleware,
