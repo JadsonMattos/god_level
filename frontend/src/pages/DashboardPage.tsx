@@ -59,7 +59,11 @@ export function DashboardPage() {
         const dashboard = await dashboardApi.getDefault()
         setDefaultDashboard(dashboard)
       } catch (error: any) {
-        console.error('Error loading default dashboard:', error)
+        // Silently handle errors - no default dashboard is expected in many cases
+        // Only log non-timeout errors
+        if (error.code !== 'ECONNABORTED' && error.response?.status !== 503 && error.response?.status !== 404) {
+          console.error('Error loading default dashboard:', error)
+        }
         // If no default dashboard (expected case) or error, continue with standard dashboard
         setDefaultDashboard(null)
       } finally {

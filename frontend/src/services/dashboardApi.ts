@@ -55,8 +55,18 @@ export const dashboardApi = {
   },
 
   getDefault: async () => {
-    const { data } = await apiClient.get<Dashboard | null>('/api/v1/dashboards/default')
-    return data
+    try {
+      const { data } = await apiClient.get<Dashboard | null>('/api/v1/dashboards/default', {
+        timeout: 30000, // 30 seconds for Render cold starts
+      })
+      return data
+    } catch (error: any) {
+      // Handle timeout and 503 errors gracefully (no default dashboard exists)
+      if (error.code === 'ECONNABORTED' || error.response?.status === 503 || error.response?.status === 404) {
+        return null
+      }
+      throw error
+    }
   },
 
   enableSharing: async (id: number) => {
